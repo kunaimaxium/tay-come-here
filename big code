@@ -1,0 +1,35 @@
+import cv2, time, RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
+pins = [17, 27]
+for p in pins:
+    GPIO.setup(p, GPIO.OUT)
+    GPIO.output(p, False)
+
+cap = cv2.VideoCapture(0)
+ret, prev = cap.read()
+prev_gray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+
+def move_servos():
+    for p in pins:
+        servo = GPIO.PWM(p, 50)
+        servo.start(7)
+        time.sleep(0.5)
+        servo.stop()
+    print("Moved servos")
+
+try:
+    while True:
+        ret, img = cap.read()
+        if not ret: break
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        diff = cv2.absdiff(prev_gray, gray)
+        if cv2.countNonZero(diff) > 5000:  # adjust threshold
+            move_servos()
+            time.sleep(10)
+        prev_gray = gray
+        time.sleep(1)
+
+finally:
+    cap.release()
+    GPIO.cleanup()
