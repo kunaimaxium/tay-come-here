@@ -1,0 +1,1 @@
+pip3 install https://github.com/google-coral/pycoral/releases/download/release-fix-tflite-runtime-3.11/tflite_runtime-2.5.0-cp311-cp311-linux_aarch64.whl
