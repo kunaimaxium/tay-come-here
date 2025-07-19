@@ -1,0 +1,43 @@
+import time
+import RPi.GPIO as GPIO
+
+# Setup for two servos
+servo_pin1 = 17
+servo_pin2 = 27
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(servo_pin1, GPIO.OUT)
+GPIO.setup(servo_pin2, GPIO.OUT)
+
+servo1 = GPIO.PWM(servo_pin1, 50)  # 50 Hz
+servo2 = GPIO.PWM(servo_pin2, 50)
+
+servo1.start(0)
+servo2.start(0)
+
+def move_servos():
+    print("Pet detected!")
+    servo1.ChangeDutyCycle(7.5)  # Neutral
+    servo2.ChangeDutyCycle(7.5)
+    time.sleep(1)
+    servo1.ChangeDutyCycle(12.5)  # Move
+    servo2.ChangeDutyCycle(12.5)
+    time.sleep(1)
+    servo1.ChangeDutyCycle(2.5)  # Reset
+    servo2.ChangeDutyCycle(2.5)
+    time.sleep(1)
+    servo1.ChangeDutyCycle(0)
+    servo2.ChangeDutyCycle(0)
+
+try:
+    while True:
+        input("Press Enter to simulate pet detection...")
+        move_servos()
+
+except KeyboardInterrupt:
+    print("Stopped by user.")
+
+finally:
+    servo1.stop()
+    servo2.stop()
+    GPIO.cleanup()
