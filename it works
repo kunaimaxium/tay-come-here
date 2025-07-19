@@ -1,0 +1,1 @@
+python -c "import tflite_runtime.interpreter as tflite; print('✅ TFLite is installed and working!')"
