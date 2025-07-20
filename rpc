@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Log to file for debugging
+echo "Starting script..." >> /home/isaia/rc.local.log
+/home/isaia/petenv/bin/python3 /home/isaia/detect_and_feed.py >> /home/isaia/rc.local.log 2>&1 &
+echo "Script launched" >> /home/isaia/rc.local.log
+
+exit 0
