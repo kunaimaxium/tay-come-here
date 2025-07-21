@@ -1,0 +1,63 @@
+import cv2
+import numpy as np
+import tflite_runtime.interpreter as tflite
+import RPi.GPIO as GPIO
+import time
+
+# Servo setup
+SERVO_PIN = 17
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(SERVO_PIN, GPIO.OUT)
+servo = GPIO.PWM(SERVO_PIN, 50)
+servo.start(0)
+
+def activate_servo():
+    servo.ChangeDutyCycle(7.5)
+    time.sleep(0.5)
+    servo.ChangeDutyCycle(2.5)
+    time.sleep(0.5)
+    servo.ChangeDutyCycle(0)
+
+# Load model
+interpreter = tflite.Interpreter(model_path="models/model.tflite")
+interpreter.allocate_tensors()
+
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+height = input_details[0]['shape'][1]
+width = input_details[0]['shape'][2]
+
+# Camera setup
+cam = cv2.VideoCapture(0)
+
+print("Running AI detection...")
+
+while True:
+    ret, frame = cam.read()
+    if not ret:
+        break
+
+    img = cv2.resize(frame, (width, height))
+    input_data = np.expand_dims(img, axis=0)
+    input_data = np.uint8(input_data)
+
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+    interpreter.invoke()
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+
+    prediction = np.argmax(output_data[0])
+    
+    # Simulate "pet detected" by checking for certain classes (e.g., cat/dog)
+    if prediction in [281, 282, 283, 284, 285]:  # Example ImageNet IDs for cats/dogs
+        print("Pet detected!")
+        activate_servo()
+        time.sleep(5)  # Wait before detecting again
+
+    # Optional: Show camera feed
+    cv2.imshow("Pet Detector", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cam.release()
+cv2.destroyAllWindows()
+GPIO.cleanup()
