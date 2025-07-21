@@ -1,0 +1,5 @@
+while True:
+    pet_detected = detect_pet()  # Replace this with your real detection logic
+    if pet_detected:
+        trigger_servos()
+    time.sleep(1)
