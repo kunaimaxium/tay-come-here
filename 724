@@ -1,0 +1,1 @@
+wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/model_unquant.tflite -O /home/isaia/model.tflite
