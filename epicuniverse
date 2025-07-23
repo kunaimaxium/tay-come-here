@@ -1,1 +1,1 @@
-wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/model_unquant.tflite -O /home/isaia/model.tflite
+wget https://github.com/tensorflow/tflite-micro/raw/main/tensorflow/lite/micro/models/micro_speech_int8.tflite -O /home/isaia/model.tflite
