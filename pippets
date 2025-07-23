@@ -1,0 +1,1 @@
+pip install https://github.com/google-coral/py-wheel-files/releases/download/v2.5.0/tflite_runtime-2.5.0-cp311-cp311-linux_armv7l.wh
