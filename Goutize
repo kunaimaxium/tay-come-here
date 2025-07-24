@@ -1,0 +1,1 @@
+wget https://github.com/google-coral/tflite-cv-models/raw/main/cat_dog_classifier.tflite
