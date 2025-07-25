@@ -1,0 +1,63 @@
+import time
+import numpy as np
+import tflite_runtime.interpreter as tflite
+from picamera import PiCamera
+from PIL import Image
+import RPi.GPIO as GPIO
+
+# === CONFIGURATION ===
+MODEL_PATH = "/home/isaia/Downloads/model.tflite"  # Update if needed
+SERVO_PIN = 17  # Change to your actual GPIO pin
+TARGET_CLASS = 1  # Change this based on your model (e.g., 0 = cat, 1 = dog)
+
+# === SETUP SERVO ===
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(SERVO_PIN, GPIO.OUT)
+servo = GPIO.PWM(SERVO_PIN, 50)
+servo.start(0)
+
+def move_servo():
+    print("Pet detected! Moving servo...")
+    servo.ChangeDutyCycle(7)  # Adjust for your servo angle
+    time.sleep(0.5)
+    servo.ChangeDutyCycle(2)
+    time.sleep(0.5)
+    servo.ChangeDutyCycle(0)  # Stop sending signal
+
+# === LOAD MODEL ===
+interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+# === CAPTURE IMAGE ===
+camera = PiCamera()
+camera.resolution = (224, 224)
+image_path = "/home/isaia/Downloads/captured.jpg"
+camera.capture(image_path)
+camera.close()
+
+# === PREPROCESS IMAGE ===
+img = Image.open(image_path).convert('RGB')
+img = img.resize((224, 224))
+input_data = np.expand_dims(np.array(img, dtype=np.uint8), axis=0)
+
+# === INFERENCE ===
+interpreter.set_tensor(input_details[0]['index'], input_data)
+interpreter.invoke()
+output_data = interpreter.get_tensor(output_details[0]['index'])
+
+print("Prediction:", output_data)
+
+# === DECISION ===
+predicted_class = np.argmax(output_data)
+print("Detected class:", predicted_class)
+
+if predicted_class == TARGET_CLASS:
+    move_servo()
+else:
+    print("No pet detected. Servo not triggered.")
+
+# === CLEANUP ===
+servo.stop()
+GPIO.cleanup()
