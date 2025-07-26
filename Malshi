@@ -1,0 +1,71 @@
+from picamera2 import Picamera2
+import time
+import numpy as np
+from tflite_runtime.interpreter import Interpreter
+import RPi.GPIO as GPIO
+import cv2
+
+# Servo setup
+SERVO_1_PIN = 17
+SERVO_2_PIN = 18
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(SERVO_1_PIN, GPIO.OUT)
+GPIO.setup(SERVO_2_PIN, GPIO.OUT)
+
+servo1 = GPIO.PWM(SERVO_1_PIN, 50)
+servo2 = GPIO.PWM(SERVO_2_PIN, 50)
+
+servo1.start(0)
+servo2.start(0)
+
+# Load TFLite model
+interpreter = Interpreter(model_path="detection.tflite")
+interpreter.allocate_tensors()
+
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+height = input_details[0]['shape'][1]
+width = input_details[0]['shape'][2]
+
+# Initialize camera
+picam2 = Picamera2()
+picam2.configure(picam2.create_still_configuration(main={"size": (width, height)}))
+picam2.start()
+time.sleep(2)
+
+# Capture image
+frame = picam2.capture_array()
+
+# Preprocess image
+img = cv2.resize(frame, (width, height))
+img = np.expand_dims(img, axis=0)
+img = img.astype(np.uint8)
+
+# Run inference
+interpreter.set_tensor(input_details[0]['index'], img)
+interpreter.invoke()
+output_data = interpreter.get_tensor(output_details[0]['index'])
+prediction = np.argmax(output_data)
+
+print("Prediction:", prediction)
+
+# Trigger servos based on prediction
+if prediction == 0:
+    print("Detected: Cat")
+    servo1.ChangeDutyCycle(7)
+    time.sleep(1)
+    servo1.ChangeDutyCycle(0)
+elif prediction == 1:
+    print("Detected: Dog")
+    servo2.ChangeDutyCycle(7)
+    time.sleep(1)
+    servo2.ChangeDutyCycle(0)
+else:
+    print("No recognizable pet detected.")
+
+# Cleanup
+servo1.stop()
+servo2.stop()
+GPIO.cleanup()
